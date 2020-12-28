@@ -2,30 +2,25 @@
 Author: Ryan Aquino
 Description: Scrape shopee.com products per category
 """
-import os
-from selenium import webdriver
-from scrape_product_details_helper import get_product_details, get_product_urls
+import concurrent.futures
+from scrape_product_details_helper import get_product_details, get_product_urls, driver
 
 
-def driver():
+def scrape_task(url: str) -> list:
     """
-    Initialize Google Chrome driver
-    :return: chrome driver instance
+    Scrape Job
+    :param url: Product Category URL
+    :return: List of product URL
     """
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("window-size=1920,1080")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("start-maximised")
-    chrome_driver = (
-        webdriver.Chrome("./chromedriver", options=chrome_options)
-        if os.name != "nt"
-        else webdriver.Chrome(options=chrome_options)
-    )
+    chrome_driver = driver()
+    products_urls = get_product_urls(chrome_driver, url)
+    print(f"Product Count: {len(products_urls)}")
+    chrome_driver.close()
 
-    return chrome_driver
+    return products_urls
 
 
-def main(chrome_driver) -> None:
+def main() -> None:
     urls = [
         "https://shopee.ph/Cameras-cat.18560",
         "https://shopee.ph/Gaming-cat.20718",
@@ -40,20 +35,23 @@ def main(chrome_driver) -> None:
         "https://shopee.ph/Women's-Accessories-cat.106",
         "https://shopee.ph/Women's-Apparel-cat.102",
     ]
+    product_list_urls = []
 
-    product_list = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = [executor.submit(scrape_task, url) for url in urls]
 
-    for url in urls:
-        products = get_product_urls(url, chrome_driver)
-        print(f"Product Count: {len(products)}")
-        product_list += products
+        for process in concurrent.futures.as_completed(results):
+            product_list_urls += process.result()
 
-    for product_url in product_list:
-        product_details = get_product_details(product_url, chrome_driver)
-        print(product_details)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        product_details = [
+            executor.submit(get_product_details, product_url)
+            for product_url in product_list_urls
+        ]
+
+        for process in concurrent.futures.as_completed(product_details):
+            print(process.result())
 
 
 if __name__ == "__main__":
-    driver = driver()
-    main(driver)
-    driver.close()
+    main()
