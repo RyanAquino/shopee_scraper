@@ -1,7 +1,12 @@
 import os
 from bs4 import BeautifulSoup
-from scrape_action_helpers import hover_to_photos, scroll_down, wait_for_element_to_load
+from helpers.scrape_action_helpers import (
+    hover_to_photos,
+    scroll_down,
+    wait_for_element_to_load,
+)
 from selenium import webdriver
+from pathlib import Path
 
 
 def driver():
@@ -15,9 +20,13 @@ def driver():
     chrome_options.add_argument("start-maximised")
     chrome_options.add_argument("--incognito")
     chrome_driver = (
-        webdriver.Chrome("./chromedriver", options=chrome_options)
-        if os.name != "nt"
-        else webdriver.Chrome(options=chrome_options)
+        webdriver.Chrome(
+            Path.cwd() / "web_drivers/chromedriver.exe", options=chrome_options
+        )
+        if os.name == "nt"
+        else webdriver.Chrome(
+            Path.cwd() / "web_drivers/chromedriver", options=chrome_options
+        )
     )
 
     return chrome_driver

@@ -3,8 +3,12 @@ Author: Ryan Aquino
 Description: Scrape shopee.com products per category and saves it to a Postgres database
 """
 import concurrent.futures
-from scrape_product_details_helper import get_product_details, get_product_urls, driver
-from database import verify_tables, create_product_table, save_product
+from helpers.scrape_product_details_helper import (
+    get_product_details,
+    get_product_urls,
+    driver,
+)
+from helpers.database import verify_tables, create_product_table, save_product
 
 
 def scrape_task(url: str) -> list:
