@@ -1,4 +1,5 @@
 # Shopee Products Scraper
+Scrapes shopee.com products per category and saves it to a Postgres database
 
 ### Requirements
 * Python 3
@@ -8,6 +9,9 @@
 ### Technology
 * Python 3
 * Selenium
+* Multiprocessing
+* Docker
+* PostgreSQL
 
 ### Setup
 ##### Install depedencies
