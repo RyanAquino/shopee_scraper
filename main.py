@@ -4,7 +4,7 @@ Description: Scrape shopee.com products per category and saves it to a Postgres 
 """
 import concurrent.futures
 from scrape_product_details_helper import get_product_details, get_product_urls, driver
-from database import verify_tables, create_product_table
+from database import verify_tables, create_product_table, save_product
 
 
 def scrape_task(url: str) -> list:
@@ -54,6 +54,7 @@ def main() -> None:
         ]
 
         for process in concurrent.futures.as_completed(product_details):
+            save_product(process.result())
             print(process.result())
 
 
