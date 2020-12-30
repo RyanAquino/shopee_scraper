@@ -36,8 +36,29 @@ def create_product_table() -> None:
     cur = conn.cursor()
     cur.execute(
         "CREATE TABLE products (id SERIAL PRIMARY KEY, name VARCHAR(191), "
-        "description VARCHAR(255), digital BOOLEAN default False, price FLOAT default 0, image VARCHAR, "
-        "quantity INTEGER default 0, created_at timestamp default current_timestamp, UNIQUE (name))"
+        "description VARCHAR(10485760), digital BOOLEAN default False, price FLOAT default 0, image VARCHAR, "
+        "quantity INTEGER default 0, created_at timestamp default current_timestamp)"
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def save_product(data) -> None:
+    """
+    Save product details into the database
+    :param data: Products model
+    :return: None
+    """
+    conn = psycopg2.connect(
+        dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO products (name,description,price,image,quantity) "
+        "VALUES(%(name)s, %(description)s, %(price)s, %(image)s, %(quantity)s)",
+        data,
     )
 
     conn.commit()

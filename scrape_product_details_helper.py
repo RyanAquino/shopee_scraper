@@ -1,4 +1,3 @@
-import time
 import os
 from bs4 import BeautifulSoup
 from scrape_action_helpers import hover_to_photos, scroll_down, wait_for_element_to_load
@@ -79,21 +78,30 @@ def get_product_details(url: str) -> dict:
     soup = BeautifulSoup(html_source, "html.parser")
     product_name = _get_product_name(soup)
     product_category = _get_product_category(soup)
-    product_price = soup.find(class_="_3n5NQx").text
+    product_price = _get_product_price(soup)
     product_quantity = _get_product_quantity(chrome_driver)
     product_description = _get_product_description(soup)
     product_image = _get_product_image(chrome_driver)
 
     chrome_driver.close()
+
+    # With Category
+    # return {
+    #     product_category: {
+    #         "name": product_name,
+    #         "description": product_description,
+    #         "price": product_price,
+    #         "image": product_image,
+    #         "quantity": product_quantity,
+    #     }
+    # }
+
     return {
-        product_category: {
-            "name": product_name,
-            "description": product_description,
-            "price": product_price,
-            "created_at": time.localtime(),
-            "quantity": product_quantity,
-            "image": product_image,
-        }
+        "name": product_name,
+        "description": product_description,
+        "price": product_price,
+        "image": product_image,
+        "quantity": product_quantity,
     }
 
 
@@ -120,6 +128,18 @@ def _get_product_image(chrome_driver) -> str:
         item_image = item_image.split(" ")[1].split('"')[1]
         return item_image
     return ""
+
+
+def _get_product_price(soup) -> str:
+    """
+    Retrieve Product Price helper
+    :param soup: product page html source
+    :return: product price
+    """
+    item = soup.find(class_="_3n5NQx").text
+    product_price = item.split("₱")[-1].replace(",", "")
+
+    return product_price
 
 
 def _get_product_name(soup) -> str:
