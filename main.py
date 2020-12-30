@@ -1,9 +1,10 @@
 """
 Author: Ryan Aquino
-Description: Scrape shopee.com products per category
+Description: Scrape shopee.com products per category and saves it to a Postgres database
 """
 import concurrent.futures
 from scrape_product_details_helper import get_product_details, get_product_urls, driver
+from database import verify_tables, create_product_table
 
 
 def scrape_task(url: str) -> list:
@@ -21,6 +22,9 @@ def scrape_task(url: str) -> list:
 
 
 def main() -> None:
+    if not verify_tables():
+        create_product_table()
+
     urls = [
         "https://shopee.ph/Cameras-cat.18560",
         "https://shopee.ph/Gaming-cat.20718",
