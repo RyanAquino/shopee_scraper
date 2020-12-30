@@ -18,9 +18,20 @@ Scrapes shopee.com products per category and saves it to a Postgres database
 ```
 pip install -r requirements.txt
 ```
-
+##### Setup PostgreSQL database configuration and adapt to your needs `.env`
+```
+cp .env.example .env
+```
 ##### Run the application
 ```
 python main.py
 ```
 
+#### Setup with dockerize PostgreSQL database (Alternative)
+```
+docker-compose up -d
+```
+##### Run the application
+```
+python main.py
+```

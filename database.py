@@ -1,9 +1,10 @@
 import psycopg2
+import os
 
-DB_NAME = "shopee_scraper"
-DB_PASS = "1"
-DB_USER = "postgres"
-DB_HOST = "localhost"
+DB_NAME = os.getenv("DB_NAME") or "shopee_scraper"
+DB_PASS = os.getenv("DB_PASS") or "1"
+DB_USER = os.getenv("DB_USER") or "postgres"
+DB_HOST = os.getenv("DB_HOST") or "localhost"
 
 
 def verify_tables() -> bool:
