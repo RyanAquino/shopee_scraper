@@ -7,6 +7,7 @@ from helpers.scrape_action_helpers import (
 )
 from selenium import webdriver
 from pathlib import Path
+from datetime import datetime
 
 
 def driver():
@@ -102,6 +103,7 @@ def get_product_details(url: str) -> dict:
     #         "price": product_price,
     #         "image": product_image,
     #         "quantity": product_quantity,
+    #         "created_at": datetime.now()
     #     }
     # }
 
@@ -111,6 +113,7 @@ def get_product_details(url: str) -> dict:
         "price": product_price,
         "image": product_image,
         "quantity": product_quantity,
+        "created_at": datetime.now(),
     }
 
 
