@@ -124,16 +124,23 @@ def _get_product_image(chrome_driver) -> str:
     :return: product image url
     """
     product_photos = chrome_driver.find_elements_by_class_name("ZPN9uD")
+    item = None
 
     if len(product_photos) != 1:
-        product_photos.pop(0)
         product_photos.reverse()
 
-    for product_photo in product_photos:
-        hover_to_photos(chrome_driver, product_photo)
+    while product_photos and not item:
+        for product_photo in product_photos:
+            hover_to_photos(chrome_driver, product_photo)
 
-    soup = BeautifulSoup(chrome_driver.page_source, "html.parser")
-    item = soup.find(class_="_2JMB9h")
+        soup = BeautifulSoup(chrome_driver.page_source, "html.parser")
+        item = soup.find(class_="_2JMB9h")
+
+        if item:
+            break
+        else:
+            product_photos.pop()
+
     item_image = item.get("style")
 
     if item_image:

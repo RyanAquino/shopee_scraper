@@ -12,7 +12,7 @@ def wait_for_element_to_load(chrome_driver, class_name: str) -> str:
     :param class_name: Single CSS class name
     :return: element
     """
-    element = WebDriverWait(chrome_driver, 10).until(
+    element = WebDriverWait(chrome_driver, 60).until(
         ec.presence_of_element_located(
             (
                 By.CLASS_NAME,

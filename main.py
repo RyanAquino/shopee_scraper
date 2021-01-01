@@ -58,8 +58,9 @@ def main() -> None:
         ]
 
         for process in concurrent.futures.as_completed(product_details):
+            print(f"{process.result()['name']} - Processing")
             save_product(process.result())
-            print(process.result())
+            print(f"{process.result()['name']} - Success")
 
 
 if __name__ == "__main__":
