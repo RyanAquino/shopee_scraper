@@ -14,6 +14,10 @@ Scrapes shopee.com products per category and saves it to a Postgres database
 * PostgreSQL
 
 ### Setup
+##### Create virtual environment
+```
+python3 -m venv venv
+```
 ##### Install depedencies
 ```
 pip install -r requirements.txt
