@@ -59,9 +59,10 @@ def scrape_product_urls_source(chrome_driver, url: str):
     chrome_driver.get(url)
     if wait_for_element_to_load(chrome_driver, "qaNIZv"):
         scroll_down(chrome_driver)
-        html_source = chrome_driver.page_source
+        if wait_products_elements(chrome_driver):
+            html_source = chrome_driver.page_source
 
-        return html_source
+            return html_source
 
 
 def get_product_urls(chrome_driver, url: str) -> [str]:
@@ -75,6 +76,14 @@ def get_product_urls(chrome_driver, url: str) -> [str]:
         product_urls.append(f"https://shopee.ph{product['href']}")
 
     return product_urls
+
+
+def wait_products_elements(chrome_driver):
+    product_category = wait_for_element_to_load(chrome_driver, "JFOy4z")
+    product_price = wait_for_element_to_load(chrome_driver, "_3n5NQx")
+    product_description = wait_for_element_to_load(chrome_driver, "_2u0jt9")
+
+    return all([product_category, product_price, product_description])
 
 
 def get_product_details(url: str) -> dict:
