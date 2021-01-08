@@ -58,9 +58,12 @@ def main() -> None:
         ]
 
         for process in concurrent.futures.as_completed(product_details):
-            print(f"{process.result()['name']} - Processing")
-            save_product(process.result())
-            print(f"{process.result()['name']} - Success")
+            try:
+                print(f"{process.result()['name']} - Processing")
+                save_product(process.result())
+                print(f"{process.result()['name']} - Success")
+            except Exception as e:
+                print(f"Exception: {str(e)}")
 
 
 if __name__ == "__main__":
