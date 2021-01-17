@@ -10,7 +10,28 @@ from pathlib import Path
 from datetime import datetime
 
 
-def driver():
+def get_webdriver_for_os(chrome_options: webdriver.ChromeOptions) -> webdriver.Chrome:
+    """
+    Retrieve web driver depending on OS
+    :param chrome_options: Google Chrome driver options
+    :return:
+    """
+    WINDOWS = "nt"
+    LINUX = "posix"
+
+    if os.name == WINDOWS:
+        return webdriver.Chrome(
+            Path.cwd() / "web_drivers/chromedriver.exe", options=chrome_options
+        )
+    elif os.name == LINUX and os.uname()[1] == "raspberrypi":
+        return webdriver.Chrome(options=chrome_options)
+
+    return webdriver.Chrome(
+        Path.cwd() / "web_drivers/chromedriver", options=chrome_options
+    )
+
+
+def driver() -> webdriver.Chrome:
     """
     Initialize Google Chrome driver
     :return: chrome driver instance
@@ -20,20 +41,12 @@ def driver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("start-maximised")
     chrome_options.add_argument("--incognito")
-    chrome_driver = (
-        webdriver.Chrome(
-            Path.cwd() / "web_drivers/chromedriver.exe", options=chrome_options
-        )
-        if os.name == "nt"
-        else webdriver.Chrome(
-            Path.cwd() / "web_drivers/chromedriver", options=chrome_options
-        )
-    )
+    chrome_driver = get_webdriver_for_os(chrome_options)
 
     return chrome_driver
 
 
-def scrape_category_url_source(chrome_driver, url: str) -> str:
+def scrape_category_url_source(chrome_driver: webdriver.Chrome, url: str) -> str:
     """
     Returns the html source code of the category page url
     :param chrome_driver: Chrome driver instance
@@ -48,7 +61,7 @@ def scrape_category_url_source(chrome_driver, url: str) -> str:
         return html_source
 
 
-def scrape_product_urls_source(chrome_driver, url: str):
+def scrape_product_urls_source(chrome_driver: webdriver.Chrome, url: str):
     """
     Returns the html source code of the product page url
 
@@ -65,7 +78,7 @@ def scrape_product_urls_source(chrome_driver, url: str):
             return html_source
 
 
-def get_product_urls(chrome_driver, url: str) -> [str]:
+def get_product_urls(chrome_driver: webdriver.Chrome, url: str) -> [str]:
     html_source = scrape_category_url_source(chrome_driver, url)
     soup = BeautifulSoup(html_source, "html.parser")
     products = soup.find_all("a", {"data-sqe": "link"})
@@ -78,7 +91,7 @@ def get_product_urls(chrome_driver, url: str) -> [str]:
     return product_urls
 
 
-def wait_products_elements(chrome_driver):
+def wait_products_elements(chrome_driver: webdriver.Chrome) -> bool:
     product_category = wait_for_element_to_load(chrome_driver, "JFOy4z")
     product_price = wait_for_element_to_load(chrome_driver, "_3n5NQx")
     product_description = wait_for_element_to_load(chrome_driver, "_2u0jt9")
@@ -96,7 +109,7 @@ def get_product_details(url: str) -> dict:
     html_source = scrape_product_urls_source(chrome_driver, url)
     soup = BeautifulSoup(html_source, "html.parser")
     product_name = _get_product_name(soup)
-    product_category = _get_product_category(soup)
+    product_category = _get_product_category(soup)  # noqa: F841
     product_price = _get_product_price(soup)
     product_quantity = _get_product_quantity(chrome_driver)
     product_description = _get_product_description(soup)
@@ -126,7 +139,7 @@ def get_product_details(url: str) -> dict:
     }
 
 
-def _get_product_image(chrome_driver) -> str:
+def _get_product_image(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve product image URL
     :param chrome_driver: chrome web driver instance
@@ -158,7 +171,7 @@ def _get_product_image(chrome_driver) -> str:
     return ""
 
 
-def _get_product_price(soup) -> str:
+def _get_product_price(soup: BeautifulSoup) -> str:
     """
     Retrieve Product Price helper
     :param soup: product page html source
@@ -170,7 +183,7 @@ def _get_product_price(soup) -> str:
     return product_price
 
 
-def _get_product_name(soup) -> str:
+def _get_product_name(soup: BeautifulSoup) -> str:
     """
     Retrieve Product Name helper
     :param soup: product page html source
@@ -182,7 +195,7 @@ def _get_product_name(soup) -> str:
     return item_name
 
 
-def _get_product_category(soup) -> str:
+def _get_product_category(soup: BeautifulSoup) -> str:
     """
     Retrieve Product Category
     :param soup: product page html source
@@ -194,7 +207,7 @@ def _get_product_category(soup) -> str:
     return item_category
 
 
-def _get_product_description(soup) -> str:
+def _get_product_description(soup: BeautifulSoup) -> str:
     """
     Retrieve Product Description
     :param soup: product page html source
@@ -206,7 +219,7 @@ def _get_product_description(soup) -> str:
     return item_description
 
 
-def _get_product_quantity(chrome_driver) -> str:
+def _get_product_quantity(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve product quantity in string format
     :param chrome_driver: chrome web driver instance
