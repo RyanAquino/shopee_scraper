@@ -1,6 +1,7 @@
 import psycopg2
 import os
 from dotenv import load_dotenv, find_dotenv
+import psycopg2.extensions
 
 load_dotenv(find_dotenv())
 
@@ -27,7 +28,7 @@ def db_connection(func):
 
 
 @db_connection
-def verify_tables(cur) -> bool:
+def verify_tables(cur: psycopg2.extensions.cursor) -> bool:
     """
     Check if products table already exist
     :return: boolean if product table exist
@@ -41,7 +42,7 @@ def verify_tables(cur) -> bool:
 
 
 @db_connection
-def create_product_table(cur) -> None:
+def create_product_table(cur: psycopg2.extensions.cursor) -> None:
     """
     Create products table
     :return: None
@@ -54,7 +55,7 @@ def create_product_table(cur) -> None:
 
 
 @db_connection
-def save_product(cur, data) -> None:
+def save_product(cur: psycopg2.extensions.cursor, data: dict) -> None:
     """
     Save product details into the database
     :param cur: cursor

@@ -2,10 +2,11 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+from selenium import webdriver
 import time
 
 
-def wait_for_element_to_load(chrome_driver, class_name: str) -> str:
+def wait_for_element_to_load(chrome_driver: webdriver.Chrome, class_name: str) -> str:
     """
     Wait for element by class name to load
     :param chrome_driver: chrome web driver instance
@@ -24,7 +25,7 @@ def wait_for_element_to_load(chrome_driver, class_name: str) -> str:
     return element
 
 
-def scroll_down(chrome_driver) -> None:
+def scroll_down(chrome_driver: webdriver.Chrome) -> None:
     """
     Scroll down page
     :param chrome_driver: chrome web driver instance
@@ -43,7 +44,7 @@ def scroll_down(chrome_driver) -> None:
             break
 
 
-def hover_to_photos(chrome_driver, element_to_hover_over) -> None:
+def hover_to_photos(chrome_driver: webdriver.Chrome, element_to_hover_over) -> None:
     """
     Hover to elements
     :param chrome_driver: chrome web driver instance
