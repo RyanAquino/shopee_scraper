@@ -9,6 +9,7 @@ from helpers.scrape_product_details_helper import (
     driver,
 )
 from helpers.database import verify_tables, create_product_table, save_product
+from loguru import logger
 
 
 def scrape_task(url: str) -> list:
@@ -19,7 +20,7 @@ def scrape_task(url: str) -> list:
     """
     chrome_driver = driver()
     products_urls = get_product_urls(chrome_driver, url)
-    print(f"Product Count: {len(products_urls)}")
+    logger.info(f"Product Count: {len(products_urls)}")
     chrome_driver.close()
 
     return products_urls
@@ -59,11 +60,11 @@ def main() -> None:
 
         for process in concurrent.futures.as_completed(product_details):
             try:
-                print(f"{process.result()['name']} - Processing")
+                logger.info(f"{process.result()['name']} - Processing")
                 save_product(process.result())
-                print(f"{process.result()['name']} - Success")
+                logger.info(f"{process.result()['name']} - Success")
             except Exception as e:
-                print(f"Exception: {str(e)}")
+                logger.exception(f"Exception: {str(e)}")
 
 
 if __name__ == "__main__":
