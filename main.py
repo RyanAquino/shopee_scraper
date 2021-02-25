@@ -10,6 +10,7 @@ from helpers.scrape_product_details_helper import (
 )
 from helpers.database import verify_tables, create_product_table, save_product
 from loguru import logger
+from datetime import datetime
 
 
 def scrape_task(url: str) -> list:
@@ -46,6 +47,9 @@ def main() -> None:
     ]
     product_list_urls = []
 
+    with open("start.txt", "w") as out_file:
+        print(str(datetime.now()), file=out_file)
+
     with concurrent.futures.ProcessPoolExecutor() as executor:
         results = [executor.submit(scrape_task, url) for url in urls]
 
@@ -65,6 +69,9 @@ def main() -> None:
                 logger.info(f"{process.result()['name']} - Success")
             except Exception as e:
                 logger.exception(f"Exception: {str(e)}")
+
+    with open("end.txt", "w") as out_file:
+        print(str(datetime.now()), file=out_file)
 
 
 if __name__ == "__main__":
