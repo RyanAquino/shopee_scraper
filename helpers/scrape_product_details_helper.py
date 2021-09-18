@@ -8,6 +8,7 @@ from helpers.scrape_action_helpers import (
 from selenium import webdriver
 from pathlib import Path
 from datetime import datetime
+from elements_config import config
 
 
 def get_webdriver_for_os(chrome_options: webdriver.ChromeOptions) -> webdriver.Chrome:
@@ -54,7 +55,7 @@ def scrape_category_url_source(chrome_driver: webdriver.Chrome, url: str) -> str
     :return: html page source code
     """
     chrome_driver.get(url)
-    if wait_for_element_to_load(chrome_driver, "carousel-arrow"):
+    if wait_for_element_to_load(chrome_driver, config["PRODUCT_CONTAINER"]):
         scroll_down(chrome_driver)
         html_source = chrome_driver.page_source
 
@@ -70,7 +71,7 @@ def scrape_product_urls_source(chrome_driver: webdriver.Chrome, url: str):
     :return:
     """
     chrome_driver.get(url)
-    if wait_for_element_to_load(chrome_driver, "qaNIZv"):
+    if wait_for_element_to_load(chrome_driver, config["PRODUCT_DETAILS"]):
         scroll_down(chrome_driver)
         if wait_products_elements(chrome_driver):
             html_source = chrome_driver.page_source
@@ -92,9 +93,13 @@ def get_product_urls(chrome_driver: webdriver.Chrome, url: str) -> [str]:
 
 
 def wait_products_elements(chrome_driver: webdriver.Chrome) -> bool:
-    product_category = wait_for_element_to_load(chrome_driver, "JFOy4z")
-    product_price = wait_for_element_to_load(chrome_driver, "_3n5NQx")
-    product_description = wait_for_element_to_load(chrome_driver, "_2u0jt9")
+    product_category = wait_for_element_to_load(
+        chrome_driver, config["PRODUCT_CATEGORY"]
+    )
+    product_price = wait_for_element_to_load(chrome_driver, config["PRODUCT_PRICE"])
+    product_description = wait_for_element_to_load(
+        chrome_driver, config["PRODUCT_DESCRIPTION"]
+    )
 
     return all([product_category, product_price, product_description])
 
@@ -123,7 +128,7 @@ def get_product_details(url: str) -> dict:
     #         "name": product_name,
     #         "description": product_description,
     #         "price": product_price,
-    #         "image": product_image,
+    #         "image_url": product_image,
     #         "quantity": product_quantity,
     #         "created_at": datetime.now()
     #     }
@@ -133,7 +138,7 @@ def get_product_details(url: str) -> dict:
         "name": product_name,
         "description": product_description,
         "price": product_price,
-        "image": product_image,
+        "image_url": product_image,
         "quantity": product_quantity,
         "created_at": datetime.now(),
     }
@@ -145,7 +150,7 @@ def _get_product_image(chrome_driver: webdriver.Chrome) -> str:
     :param chrome_driver: chrome web driver instance
     :return: product image url
     """
-    product_photos = chrome_driver.find_elements_by_class_name("ZPN9uD")
+    product_photos = chrome_driver.find_elements_by_class_name(config["PRODUCT_PHOTOS"])
     item = None
 
     if len(product_photos) != 1:
@@ -156,7 +161,7 @@ def _get_product_image(chrome_driver: webdriver.Chrome) -> str:
             hover_to_photos(chrome_driver, product_photo)
 
         soup = BeautifulSoup(chrome_driver.page_source, "html.parser")
-        item = soup.find(class_="_2JMB9h")
+        item = soup.find(class_=config["PRODUCT_DETAIL_PHOTO"])
 
         if item:
             break
@@ -177,7 +182,7 @@ def _get_product_price(soup: BeautifulSoup) -> str:
     :param soup: product page html source
     :return: product price
     """
-    item = soup.find(class_="_3n5NQx").text
+    item = soup.find(class_=config["PRODUCT_PRICE"]).text
     product_price = item.split("₱")[-1].replace(",", "")
 
     return product_price
@@ -189,7 +194,7 @@ def _get_product_name(soup: BeautifulSoup) -> str:
     :param soup: product page html source
     :return: product name
     """
-    item = soup.find(class_="qaNIZv")
+    item = soup.find(class_=config["PRODUCT_NAME"])
     item_name = item.find("span").text
 
     return item_name
@@ -201,7 +206,7 @@ def _get_product_category(soup: BeautifulSoup) -> str:
     :param soup: product page html source
     :return: product category
     """
-    item = soup.findAll(class_="JFOy4z")
+    item = soup.findAll(class_=config["PRODUCT_CATEGORY"])
     item_category = item[1].text
 
     return item_category
@@ -213,7 +218,7 @@ def _get_product_description(soup: BeautifulSoup) -> str:
     :param soup: product page html source
     :return: product description
     """
-    item = soup.find(class_="_2u0jt9")
+    item = soup.find(class_=config["PRODUCT_DESCRIPTION"])
     item_description = item.find("span").text
 
     return item_description

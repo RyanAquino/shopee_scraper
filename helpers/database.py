@@ -63,9 +63,10 @@ def save_product(cur: psycopg2.extensions.cursor, data: dict) -> None:
     :return: None
     """
     cur.execute(
-        f"INSERT INTO {DB_TABLE} (name,description,price,image,quantity,created_at) "
-        "VALUES(%(name)s, %(description)s, %(price)s, %(image)s, %(quantity)s, %(created_at)s) "
+        f"INSERT INTO {DB_TABLE} (name,description,price,image_url,quantity,created_at) "
+        "VALUES(%(name)s, %(description)s, %(price)s, %(image_url)s, %(quantity)s, %(created_at)s) "
         "ON CONFLICT (name) DO UPDATE SET (name, description, price, image, quantity, created_at) = "
-        "(EXCLUDED.name, EXCLUDED.description, EXCLUDED.price, EXCLUDED.image, EXCLUDED.quantity, EXCLUDED.created_at)",
+        "(EXCLUDED.name, EXCLUDED.description, EXCLUDED.price, EXCLUDED.image_url, EXCLUDED.quantity,"
+        "EXCLUDED.created_at)",
         data,
     )
