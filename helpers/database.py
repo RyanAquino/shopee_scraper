@@ -1,7 +1,8 @@
-import psycopg2
 import os
-from dotenv import load_dotenv, find_dotenv
+
+import psycopg2
 import psycopg2.extensions
+from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
 
@@ -49,7 +50,7 @@ def create_product_table(cur: psycopg2.extensions.cursor) -> None:
     """
     cur.execute(
         f"CREATE TABLE {DB_TABLE} (id SERIAL PRIMARY KEY, name VARCHAR(10485760) UNIQUE, "
-        "description VARCHAR(10485760), digital BOOLEAN default False, price FLOAT default 0, image VARCHAR, "
+        "description VARCHAR(10485760), digital BOOLEAN default False, price FLOAT default 0, image_url VARCHAR, "
         "quantity INTEGER default 0, created_at timestamp default current_timestamp)"
     )
 
@@ -65,7 +66,7 @@ def save_product(cur: psycopg2.extensions.cursor, data: dict) -> None:
     cur.execute(
         f"INSERT INTO {DB_TABLE} (name,description,price,image_url,quantity,created_at) "
         "VALUES(%(name)s, %(description)s, %(price)s, %(image_url)s, %(quantity)s, %(created_at)s) "
-        "ON CONFLICT (name) DO UPDATE SET (name, description, price, image, quantity, created_at) = "
+        "ON CONFLICT (name) DO UPDATE SET (name, description, price, image_url, quantity, created_at) = "
         "(EXCLUDED.name, EXCLUDED.description, EXCLUDED.price, EXCLUDED.image_url, EXCLUDED.quantity,"
         "EXCLUDED.created_at)",
         data,

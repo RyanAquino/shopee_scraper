@@ -1,50 +1,33 @@
-import os
+from datetime import datetime
+
+import undetected_chromedriver as uc
 from bs4 import BeautifulSoup
+from selenium import webdriver
+
+from elements_config import config
 from helpers.scrape_action_helpers import (
+    find_element_by_xpath,
+    find_elements_by_xpath,
     hover_to_photos,
     scroll_down,
     wait_for_element_to_load,
 )
-from selenium import webdriver
-from pathlib import Path
-from datetime import datetime
-from elements_config import config
-
-
-def get_webdriver_for_os(chrome_options: webdriver.ChromeOptions) -> webdriver.Chrome:
-    """
-    Retrieve web driver depending on OS
-    :param chrome_options: Google Chrome driver options
-    :return:
-    """
-    WINDOWS = "nt"
-    LINUX = "posix"
-
-    if os.name == WINDOWS:
-        return webdriver.Chrome(
-            Path.cwd() / "web_drivers/chromedriver.exe", options=chrome_options
-        )
-    elif os.name == LINUX and os.uname()[1] == "raspberrypi":
-        return webdriver.Chrome(options=chrome_options)
-
-    return webdriver.Chrome(
-        Path.cwd() / "web_drivers/chromedriver", options=chrome_options
-    )
 
 
 def driver() -> webdriver.Chrome:
     """
-    Initialize Google Chrome driver
-    :return: chrome driver instance
+    Initialize Google Chrome browser options
+    :return: Google Chrome instance
     """
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("window-size=1920,1080")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("start-maximised")
+    chrome_options = uc.ChromeOptions()
     chrome_options.add_argument("--incognito")
-    chrome_driver = get_webdriver_for_os(chrome_options)
 
-    return chrome_driver
+    return uc.Chrome(
+        use_subprocess=False,
+        options=chrome_options,
+        user_multi_procs=True,
+        browser_executable_path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    )
 
 
 def scrape_category_url_source(chrome_driver: webdriver.Chrome, url: str) -> str:
@@ -55,6 +38,7 @@ def scrape_category_url_source(chrome_driver: webdriver.Chrome, url: str) -> str
     :return: html page source code
     """
     chrome_driver.get(url)
+
     if wait_for_element_to_load(chrome_driver, config["PRODUCT_CONTAINER"]):
         scroll_down(chrome_driver)
         html_source = chrome_driver.page_source
@@ -66,9 +50,9 @@ def scrape_product_urls_source(chrome_driver: webdriver.Chrome, url: str):
     """
     Returns the html source code of the product page url
 
-    :param chrome_driver:
-    :param url:
-    :return:
+    :param chrome_driver: Chrome driver instance
+    :param url: URL string
+    :return: HTML source
     """
     chrome_driver.get(url)
     if wait_for_element_to_load(chrome_driver, config["PRODUCT_DETAILS"]):
@@ -80,6 +64,12 @@ def scrape_product_urls_source(chrome_driver: webdriver.Chrome, url: str):
 
 
 def get_product_urls(chrome_driver: webdriver.Chrome, url: str) -> [str]:
+    """
+    Get product URLs
+    :param chrome_driver: Chrome driver instance
+    :param url: product category URL
+    :return: list of product URLs
+    """
     html_source = scrape_category_url_source(chrome_driver, url)
     soup = BeautifulSoup(html_source, "html.parser")
     products = soup.find_all("a", {"data-sqe": "link"})
@@ -93,6 +83,11 @@ def get_product_urls(chrome_driver: webdriver.Chrome, url: str) -> [str]:
 
 
 def wait_products_elements(chrome_driver: webdriver.Chrome) -> bool:
+    """
+    Wait for product elements to be loaded.
+    :param chrome_driver: Chrome driver instance
+    :return: True if all elements are loaded else False
+    """
     product_category = wait_for_element_to_load(
         chrome_driver, config["PRODUCT_CATEGORY"]
     )
@@ -111,16 +106,20 @@ def get_product_details(url: str) -> dict:
     :return: Product dictionary
     """
     chrome_driver = driver()
-    html_source = scrape_product_urls_source(chrome_driver, url)
-    soup = BeautifulSoup(html_source, "html.parser")
-    product_name = _get_product_name(soup)
-    product_category = _get_product_category(soup)  # noqa: F841
-    product_price = _get_product_price(soup)
-    product_quantity = _get_product_quantity(chrome_driver)
-    product_description = _get_product_description(soup)
-    product_image = _get_product_image(chrome_driver)
-
-    chrome_driver.close()
+    try:
+        if not scrape_product_urls_source(chrome_driver, url):
+            return {}
+        product_name = _get_product_name(chrome_driver)
+        product_category = _get_product_category(chrome_driver)  # noqa: F841
+        product_price = _get_product_price(chrome_driver)
+        product_quantity = _get_product_quantity(chrome_driver)
+        product_description = _get_product_description(chrome_driver)
+        product_image = _get_product_image(chrome_driver)
+    except Exception as e:
+        print(str(e))
+        raise Exception(url)
+    finally:
+        chrome_driver.quit()
 
     # With Category
     # return {
@@ -150,88 +149,96 @@ def _get_product_image(chrome_driver: webdriver.Chrome) -> str:
     :param chrome_driver: chrome web driver instance
     :return: product image url
     """
-    product_photos = chrome_driver.find_elements_by_class_name(config["PRODUCT_PHOTOS"])
+
+    product_photos = find_elements_by_xpath(chrome_driver, config["PRODUCT_PHOTOS"])
     item = None
+    item_image = None
 
     if len(product_photos) != 1:
         product_photos.reverse()
 
-    while product_photos and not item:
+    while product_photos and not item_image:
         for product_photo in product_photos:
             hover_to_photos(chrome_driver, product_photo)
 
-        soup = BeautifulSoup(chrome_driver.page_source, "html.parser")
-        item = soup.find(class_=config["PRODUCT_DETAIL_PHOTO"])
+        item = find_element_by_xpath(chrome_driver, config["PRODUCT_DETAIL_PHOTO"])
 
         if item:
             break
         else:
             product_photos.pop()
 
-    item_image = item.get("style")
+    if not item:
+        return item
+
+    item_image = item.get_attribute("style")
 
     if item_image:
         item_image = item_image.split(" ")[1].split('"')[1]
-        return item_image
-    return ""
+
+    return item_image
 
 
-def _get_product_price(soup: BeautifulSoup) -> str:
+def _get_product_price(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve Product Price helper
-    :param soup: product page html source
+    :param chrome_driver: chrome web driver instance
     :return: product price
     """
-    item = soup.find(class_=config["PRODUCT_PRICE"]).text
+    product_price_xpath = config["PRODUCT_PRICE"]
+    item = find_element_by_xpath(chrome_driver, product_price_xpath).text
+
     product_price = item.split("₱")[-1].replace(",", "")
 
-    return product_price
+    return product_price or 0
 
 
-def _get_product_name(soup: BeautifulSoup) -> str:
+def _get_product_name(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve Product Name helper
-    :param soup: product page html source
+    :param chrome_driver: chrome web driver instance
     :return: product name
     """
-    item = soup.find(class_=config["PRODUCT_NAME"])
-    item_name = item.find("span").text
+    product_name_xpath = config["PRODUCT_NAME"]
+    item = find_element_by_xpath(chrome_driver, product_name_xpath)
 
-    return item_name
+    return item.text
 
 
-def _get_product_category(soup: BeautifulSoup) -> str:
+def _get_product_category(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve Product Category
-    :param soup: product page html source
+    :param chrome_driver: chrome web driver instance
     :return: product category
     """
-    item = soup.findAll(class_=config["PRODUCT_CATEGORY"])
-    item_category = item[1].text
+    product_category_xpath = config["PRODUCT_CATEGORY"]
+    item_category = find_element_by_xpath(chrome_driver, product_category_xpath)
 
-    return item_category
+    return item_category.text
 
 
-def _get_product_description(soup: BeautifulSoup) -> str:
+def _get_product_description(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve Product Description
-    :param soup: product page html source
+    :param chrome_driver: Chrome web driver instance
     :return: product description
     """
-    item = soup.find(class_=config["PRODUCT_DESCRIPTION"])
-    item_description = item.find("span").text
+    item = find_element_by_xpath(chrome_driver, config["PRODUCT_DESCRIPTION"])
 
-    return item_description
+    if not item:
+        return ""
+
+    return item.text
 
 
 def _get_product_quantity(chrome_driver: webdriver.Chrome) -> str:
     """
     Retrieve product quantity in string format
-    :param chrome_driver: chrome web driver instance
+    :param chrome_driver: Chrome web driver instance
     :return: quantity of product
     """
-    quantity = chrome_driver.find_element_by_xpath(
-        "//div[contains(text(),'piece available')]"
+    quantity = find_element_by_xpath(
+        chrome_driver, "//div[contains(text(),'pieces available')]"
     ).text
     quantity = quantity.split()[0]
 
