@@ -3,8 +3,8 @@ Scrapes shopee.com products per category and saves it to a Postgres database
 
 ### Requirements
 * Python 3
-* Google Chrome v87
-* Selenium Chrome Driver for Chrome v87
+* Google Chrome
+* Selenium Chrome Driver compatible with installed Google Chrome version. Download [here](https://chromedriver.chromium.org/downloads)
 
 ### Technology
 * Python 3
