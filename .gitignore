@@ -62,7 +62,6 @@ pytestdebug.log
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -145,4 +144,4 @@ dmypy.json
 # End of https://www.toptal.com/developers/gitignore/api/
 
 .idea/
-logs/
+.DS_Store

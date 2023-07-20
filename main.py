@@ -3,14 +3,16 @@ Author: Ryan Aquino
 Description: Scrape shopee.com products per category and saves it to a Postgres database
 """
 import concurrent.futures
+from datetime import datetime
+
+from loguru import logger
+
+from helpers.database import create_product_table, save_product, verify_tables
 from helpers.scrape_product_details_helper import (
+    driver,
     get_product_details,
     get_product_urls,
-    driver,
 )
-from helpers.database import verify_tables, create_product_table, save_product
-from loguru import logger
-from datetime import datetime
 
 
 def scrape_task(url: str) -> list:
@@ -22,7 +24,7 @@ def scrape_task(url: str) -> list:
     chrome_driver = driver()
     products_urls = get_product_urls(chrome_driver, url)
     logger.info(f"Product Count: {len(products_urls)}")
-    chrome_driver.close()
+    chrome_driver.quit()
 
     return products_urls
 
@@ -46,17 +48,18 @@ def main() -> None:
         "https://shopee.ph/Women's-Apparel-cat.102",
     ]
     product_list_urls = []
+    exception_urls = []
 
-    with open("start.txt", "w") as out_file:
-        print(str(datetime.now()), file=out_file)
-
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         results = [executor.submit(scrape_task, url) for url in urls]
 
         for process in concurrent.futures.as_completed(results):
             product_list_urls += process.result()
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    products_count = len(product_list_urls)
+    logger.info(products_count)
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         product_details = [
             executor.submit(get_product_details, product_url)
             for product_url in product_list_urls
@@ -64,14 +67,24 @@ def main() -> None:
 
         for process in concurrent.futures.as_completed(product_details):
             try:
-                logger.info(f"{process.result()['name']} - Processing")
-                save_product(process.result())
-                logger.info(f"{process.result()['name']} - Success")
-            except Exception as e:
-                logger.exception(f"Exception: {str(e)}")
+                result = process.result()
+                if not result:
+                    continue
 
-    with open("end.txt", "w") as out_file:
-        print(str(datetime.now()), file=out_file)
+                print(result)
+                logger.info(f"{result['name']} - Processing")
+                save_product(result)
+                logger.info(f"{result['name']} - Success")
+                products_count -= len(exception_urls) + 1
+                logger.warning(f"Products exceptions: {len(exception_urls)}")
+                logger.info(f"Products remaining: {products_count}")
+            except Exception as exception_url:
+                exception_urls.append(str(exception_url))
+
+    with open(
+        f"logs/exceptions_urls_{datetime.now()}.txt", "w", encoding="utf-8"
+    ) as file:
+        file.write(str(exception_urls))
 
 
 if __name__ == "__main__":
